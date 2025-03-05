@@ -123,7 +123,7 @@ const ItemCard: React.FC<{ item: DetectedItem; usingGoogleVision?: boolean; usin
             <Badge 
               className="absolute top-2 left-2" 
               variant="outline"
-              className="bg-gradient-to-r from-purple-500 to-blue-500 text-white border-0"
+              style={{background: 'linear-gradient(to right, rgb(168, 85, 247), rgb(59, 130, 246))', color: 'white', borderWidth: '0'}}
             >
               <Sparkles className="w-3 h-3 mr-1" />
               GPT-4o
@@ -215,7 +215,13 @@ const Results: React.FC<ResultsProps> = ({
       )}
       
       {usingGPT && (
-        <Alert className="mb-6" className="bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/20 dark:to-blue-900/20 border-blue-200 dark:border-blue-800">
+        <Alert 
+          className="mb-6"
+          style={{
+            background: 'linear-gradient(to right, rgba(168, 85, 247, 0.1), rgba(59, 130, 246, 0.1))',
+            borderColor: 'rgba(59, 130, 246, 0.2)'
+          }}
+        >
           <Sparkles className="h-4 w-4 text-blue-500" />
           <AlertDescription>
             GPT-4oを使用して高度な商品分析を行っています。ブランド推定や素材判定が可能です。
