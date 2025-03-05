@@ -1,12 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Tag, AlertTriangle, Cloud, Info, ShoppingBag, Sparkles } from 'lucide-react';
+import { Download, Tag, AlertTriangle, Cloud, Info, ShoppingBag, Sparkles, Search, X } from 'lucide-react';
 import { DetectedItem, downloadImage } from '@/utils/imageProcessing';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 
 interface ResultsProps {
   items: DetectedItem[];
@@ -16,11 +17,99 @@ interface ResultsProps {
   usingGPT?: boolean;
 }
 
+// 類似商品検索ダイアログコンポーネント
+const SimilarItemsDialog = ({ 
+  open, 
+  onClose, 
+  itemType, 
+  itemName 
+}: { 
+  open: boolean; 
+  onClose: () => void; 
+  itemType: string;
+  itemName: string;
+}) => {
+  // Pinterestのような検索結果をシミュレート
+  const mockSimilarItems = [
+    {
+      id: 1,
+      name: `${itemName} - スタイル1`,
+      image: 'https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?q=80&w=200',
+      price: '¥12,800'
+    },
+    {
+      id: 2,
+      name: `${itemName} - スタイル2`,
+      image: 'https://images.unsplash.com/photo-1548126032-079a0fb0099d?q=80&w=200',
+      price: '¥9,800'
+    },
+    {
+      id: 3,
+      name: `${itemName} - スタイル3`,
+      image: 'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?q=80&w=200',
+      price: '¥15,400'
+    },
+    {
+      id: 4,
+      name: `${itemName} - スタイル4`,
+      image: 'https://images.unsplash.com/photo-1543076447-215ad9ba6923?q=80&w=200',
+      price: '¥11,200'
+    }
+  ];
+
+  return (
+    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Search className="w-5 h-5" />
+            「{itemName}」の類似商品
+          </DialogTitle>
+          <DialogDescription>
+            AIによって抽出された特徴に基づいて類似する商品を表示しています
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+          {mockSimilarItems.map((item) => (
+            <div key={item.id} className="group relative overflow-hidden rounded-md border hover-scale">
+              <img 
+                src={item.image} 
+                alt={item.name} 
+                className="w-full aspect-square object-cover"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-2 text-white">
+                <div className="text-xs font-medium truncate">{item.name}</div>
+                <div className="text-xs opacity-90">{item.price}</div>
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button size="sm" variant="secondary" className="text-xs">
+                  詳細を見る
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="flex justify-end gap-2 mt-2">
+          <DialogClose asChild>
+            <Button variant="outline">
+              閉じる
+            </Button>
+          </DialogClose>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const ItemCard: React.FC<{ item: DetectedItem; usingGoogleVision?: boolean; usingGPT?: boolean }> = ({ 
   item, 
   usingGoogleVision,
   usingGPT
 }) => {
+  const [showSimilarItems, setShowSimilarItems] = useState(false);
+  
   const typeLabels = {
     top: 'トップス',
     bottom: 'ボトムス',
@@ -93,6 +182,15 @@ const ItemCard: React.FC<{ item: DetectedItem; usingGoogleVision?: boolean; usin
     );
   };
 
+  // 商品名を取得（GPTの結果から最初の行、または分類結果を使用）
+  const getItemName = (): string => {
+    if (item.productInfo && usingGPT) {
+      const firstLine = item.productInfo.split('\n')[0];
+      return firstLine || item.classification || typeLabels[item.type];
+    }
+    return item.classification || typeLabels[item.type];
+  };
+
   return (
     <TooltipProvider>
       <Card className="overflow-hidden hover-scale">
@@ -161,16 +259,35 @@ const ItemCard: React.FC<{ item: DetectedItem; usingGoogleVision?: boolean; usin
           )}
         </CardContent>
         
-        <CardFooter className="p-2 bg-card flex justify-end">
+        <CardFooter className="p-2 bg-card flex gap-2">
           <Button 
             variant="outline" 
             size="sm" 
-            className="w-full focus-ring"
+            className="flex-1 focus-ring"
             onClick={handleDownload}
           >
             <Download className="w-4 h-4 mr-2" />
-            ダウンロード
+            保存
           </Button>
+          
+          <Button
+            variant="default"
+            size="sm"
+            className="flex-1 focus-ring bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600"
+            onClick={() => setShowSimilarItems(true)}
+          >
+            <Search className="w-4 h-4 mr-2" />
+            類似検索
+          </Button>
+          
+          {showSimilarItems && (
+            <SimilarItemsDialog
+              open={showSimilarItems}
+              onClose={() => setShowSimilarItems(false)}
+              itemType={item.type}
+              itemName={getItemName()}
+            />
+          )}
         </CardFooter>
       </Card>
     </TooltipProvider>
