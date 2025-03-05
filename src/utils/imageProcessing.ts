@@ -1,3 +1,4 @@
+
 import { loadImage, removeBackground } from '@/lib/transformers';
 import { classifyImage, classifyImageWithGoogleVision } from '@/lib/classification';
 
@@ -8,14 +9,7 @@ export interface DetectedItem {
   blob: Blob;
   classification?: string; // 詳細な分類結果
   confidence?: number;    // 分類の信頼度
-  productInfo?: string;   // 商品情報
-  amazonResults?: Array<{ // Amazon商品検索結果
-    title: string;
-    brand?: string;
-    price?: string;
-    imageUrl?: string;
-    productUrl?: string;
-  }>;
+  productInfo?: string;   // 商品情報（新規追加）
 }
 
 // Helper function to create cropped image
@@ -137,8 +131,7 @@ const classifyItems = async (items: DetectedItem[]): Promise<DetectedItem[]> => 
             ...item,
             classification: classification.label,
             confidence: classification.score,
-            productInfo: classification.productInfo, // 商品情報を追加
-            amazonResults: classification.amazonResults // Amazon商品検索結果を追加
+            productInfo: classification.productInfo // 商品情報を追加
           };
         } catch (error) {
           console.error(`Error classifying ${item.type}:`, error);

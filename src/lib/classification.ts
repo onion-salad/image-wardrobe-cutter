@@ -1,17 +1,9 @@
 import { pipeline } from '@huggingface/transformers';
-import { searchProductsByImage } from './amazonApi';
 
 export interface ClassificationResult {
   label: string;
   score: number;
   productInfo?: string;
-  amazonResults?: Array<{
-    title: string;
-    brand?: string;
-    price?: string;
-    imageUrl?: string;
-    productUrl?: string;
-  }>;
 }
 
 const fashionLabels: Record<string, string> = {
@@ -171,7 +163,6 @@ export const classifyImageWithGoogleVision = async (imageBlob: Blob): Promise<Cl
       let label = '不明';
       let score = 0;
       let productInfo = '';
-      let detectedText = '';
 
       if (response.labelAnnotations && response.labelAnnotations.length > 0) {
         const annotations = response.labelAnnotations;
@@ -205,7 +196,6 @@ export const classifyImageWithGoogleVision = async (imageBlob: Blob): Promise<Cl
 
       let productText = '';
       if (response.textAnnotations && response.textAnnotations.length > 0) {
-        detectedText = response.textAnnotations[0].description;
         const text = response.textAnnotations[0].description;
         const lines = text.split('\n').slice(0, 3);
         if (lines.length > 0) {
@@ -256,26 +246,11 @@ export const classifyImageWithGoogleVision = async (imageBlob: Blob): Promise<Cl
         productInfo = infoItems.join(' | ');
       }
       
-      // Amazon商品検索を試みる
-      try {
-        // 検出されたラベルとテキストを使用して検索
-        const amazonResults = await searchProductsByImage(label, detectedText);
-        
-        return {
-          label: label,
-          score: score,
-          productInfo: productInfo,
-          amazonResults: amazonResults
-        };
-      } catch (e) {
-        // Amazonエラーの場合でも元の結果を返す
-        console.error('Amazon検索エラー:', e);
-        return {
-          label: label,
-          score: score,
-          productInfo: productInfo
-        };
-      }
+      return {
+        label: label,
+        score: score,
+        productInfo: productInfo
+      };
     }
 
     return { label: '不明', score: 0 };
