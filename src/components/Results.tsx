@@ -2,13 +2,15 @@
 import React from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Tag } from 'lucide-react';
+import { Download, Tag, AlertTriangle } from 'lucide-react';
 import { DetectedItem, downloadImage } from '@/utils/imageProcessing';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ResultsProps {
   items: DetectedItem[];
   onReset: () => void;
+  showApiError?: boolean;
 }
 
 const ItemCard: React.FC<{ item: DetectedItem }> = ({ item }) => {
@@ -74,7 +76,7 @@ const ItemCard: React.FC<{ item: DetectedItem }> = ({ item }) => {
   );
 };
 
-const Results: React.FC<ResultsProps> = ({ items, onReset }) => {
+const Results: React.FC<ResultsProps> = ({ items, onReset, showApiError }) => {
   if (items.length === 0) return null;
 
   return (
@@ -85,6 +87,16 @@ const Results: React.FC<ResultsProps> = ({ items, onReset }) => {
           新しい画像を処理
         </Button>
       </div>
+
+      {showApiError && (
+        <Alert className="mb-6" variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            アイテムの分類精度を向上させるには、Google Cloud Vision APIなどの外部サービスの利用をお勧めします。
+            ブラウザ内のAIには限界があります。
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {items.map((item, index) => (

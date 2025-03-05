@@ -66,11 +66,14 @@ export const classifyImage = async (imageUrl: string, category?: string): Promis
     // 分類器をロードする（初回のみ）
     if (!classifier) {
       console.log('画像分類モデルをロード中...');
+      
+      // 重要: CPUではなくWebGPUまたはWasmを使用する
       classifier = await pipeline(
         'image-classification',
-        'onnx-community/mobilenetv4_conv_small.e2400_r224_in1k', // 軽量モデルを使用
-        { device: 'cpu' } // WebGPUがない場合はCPUにフォールバック
+        'onnx-community/mobilenetv4_conv_small.e2400_r224_in1k',
+        { device: 'wasm' } // WebGPUがサポートされていない場合はwasmを使用
       );
+      
       console.log('分類モデルがロード完了しました');
     }
     
@@ -113,6 +116,28 @@ export const classifyImage = async (imageUrl: string, category?: string): Promis
     return { label, score };
   } catch (error) {
     console.error('画像分類中にエラーが発生しました:', error);
+    
+    // エラーが発生した場合は、Google Vision APIを使用するオプションを表示
+    console.log('より高精度な分類には、Google Vision APIの使用をお勧めします');
+    
     return { label: '不明', score: 0 };
   }
 };
+
+// Google Vision APIを使用した分類（コメントアウト）
+// 注：この機能を使用するには、Google Cloud Vision APIのキーが必要です
+/*
+export const classifyImageWithGoogleVision = async (imageBase64: string): Promise<ClassificationResult> => {
+  try {
+    // ここでGoogle Cloud Vision APIを呼び出す
+    // 実際の実装では、サーバーサイドでAPIキーを安全に保管し、
+    // フロントエンドからはサーバーエンドポイントを呼び出すのが良い方法です
+    
+    // モックの結果を返す
+    return { label: 'デニムジャケット', score: 0.95 };
+  } catch (error) {
+    console.error('Google Vision API呼び出し中にエラーが発生しました:', error);
+    return { label: '不明', score: 0 };
+  }
+};
+*/
