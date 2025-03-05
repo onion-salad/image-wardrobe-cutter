@@ -11,13 +11,13 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     <header className={cn('w-full py-6 animate-fade-in', className)}>
       <div className="container flex flex-col items-center justify-center text-center space-y-2">
         <div className="inline-flex items-center justify-center px-2 py-1 mb-2 rounded-full bg-accent text-accent-foreground text-xs font-medium">
-          <span>AI-Powered Image Recognition</span>
+          <span>AIパワード画像認識</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">
-          Wardrobe Cutter
+          ワードローブカッター
         </h1>
         <p className="text-muted-foreground max-w-md">
-          Extract clothing items and accessories from your photos with precision
+          写真から衣類アイテムやアクセサリーを高精度で抽出します
         </p>
       </div>
     </header>

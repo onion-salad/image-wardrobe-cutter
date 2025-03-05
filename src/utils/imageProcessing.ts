@@ -1,12 +1,14 @@
 
 import { loadImage, removeBackground } from '@/lib/transformers';
+import { classifyImage } from '@/lib/classification';
 
-// Simple mock of clothing detection
-// In a real implementation, this would use body pose estimation
+// 拡張されたアイテム型定義
 export interface DetectedItem {
   type: 'top' | 'bottom' | 'shoes' | 'bag';
   imageUrl: string;
   blob: Blob;
+  classification?: string; // 詳細な分類結果
+  confidence?: number;    // 分類の信頼度
 }
 
 // Helper function to create cropped image
@@ -93,10 +95,60 @@ export const processImage = async (file: File): Promise<DetectedItem[]> => {
       }
     ];
     
-    return results;
+    // 分類処理を実行
+    const classifiedResults = await classifyItems(results);
+    
+    return classifiedResults;
   } catch (error) {
     console.error('Error processing image:', error);
     throw new Error('Failed to process image');
+  }
+};
+
+// 各アイテムを分類
+const classifyItems = async (items: DetectedItem[]): Promise<DetectedItem[]> => {
+  try {
+    const classifiedItems = await Promise.all(
+      items.map(async (item) => {
+        try {
+          // 画像の種類によって適切なカテゴリを指定
+          const category = getCategoryForType(item.type);
+          
+          // 分類を実行
+          const classification = await classifyImage(item.imageUrl, category);
+          
+          return {
+            ...item,
+            classification: classification.label,
+            confidence: classification.score
+          };
+        } catch (error) {
+          console.error(`Error classifying ${item.type}:`, error);
+          return item; // エラーの場合は元のアイテムを返す
+        }
+      })
+    );
+    
+    return classifiedItems;
+  } catch (error) {
+    console.error('Error in classification process:', error);
+    return items; // エラーの場合は元のアイテムを返す
+  }
+};
+
+// アイテムの種類に基づいて分類カテゴリを決定
+const getCategoryForType = (type: 'top' | 'bottom' | 'shoes' | 'bag'): string => {
+  switch (type) {
+    case 'top':
+      return 'upper_clothes';
+    case 'bottom':
+      return 'lower_clothes';
+    case 'shoes':
+      return 'footwear';
+    case 'bag':
+      return 'bag';
+    default:
+      return 'fashion';
   }
 };
 

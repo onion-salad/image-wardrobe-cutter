@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, Tag } from 'lucide-react';
 import { DetectedItem, downloadImage } from '@/utils/imageProcessing';
 import { Badge } from '@/components/ui/badge';
 
@@ -13,10 +13,10 @@ interface ResultsProps {
 
 const ItemCard: React.FC<{ item: DetectedItem }> = ({ item }) => {
   const typeLabels = {
-    top: 'Top',
-    bottom: 'Bottom',
-    shoes: 'Shoes',
-    bag: 'Bag'
+    top: 'トップス',
+    bottom: 'ボトムス',
+    shoes: '靴',
+    bag: 'バッグ'
   };
 
   const handleDownload = () => {
@@ -38,6 +38,27 @@ const ItemCard: React.FC<{ item: DetectedItem }> = ({ item }) => {
           {typeLabels[item.type]}
         </Badge>
       </div>
+      
+      {/* 分類結果の表示 */}
+      <CardContent className="p-3">
+        {item.classification ? (
+          <div className="flex items-center gap-2 text-sm">
+            <Tag className="w-4 h-4 text-muted-foreground" />
+            <span className="font-medium">{item.classification}</span>
+            {item.confidence && (
+              <span className="text-xs text-muted-foreground ml-auto">
+                {Math.round(item.confidence * 100)}%
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Tag className="w-4 h-4" />
+            <span>分類中...</span>
+          </div>
+        )}
+      </CardContent>
+      
       <CardFooter className="p-2 bg-card flex justify-end">
         <Button 
           variant="outline" 
@@ -46,7 +67,7 @@ const ItemCard: React.FC<{ item: DetectedItem }> = ({ item }) => {
           onClick={handleDownload}
         >
           <Download className="w-4 h-4 mr-2" />
-          Download
+          ダウンロード
         </Button>
       </CardFooter>
     </Card>
@@ -59,9 +80,9 @@ const Results: React.FC<ResultsProps> = ({ items, onReset }) => {
   return (
     <div className="w-full max-w-4xl mx-auto animate-slide-up">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-medium">Detected Items</h2>
+        <h2 className="text-2xl font-medium">検出アイテム</h2>
         <Button variant="outline" onClick={onReset}>
-          Process New Image
+          新しい画像を処理
         </Button>
       </div>
 

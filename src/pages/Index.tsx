@@ -25,14 +25,14 @@ const Index = () => {
       setShowResults(true);
       
       toast({
-        title: "Processing complete",
-        description: "Your image has been successfully processed",
+        title: "処理完了",
+        description: "画像の処理が正常に完了しました",
       });
     } catch (error) {
       console.error('Error processing image:', error);
       toast({
-        title: "Processing failed",
-        description: "There was an error processing your image. Please try again.",
+        title: "処理失敗",
+        description: "画像の処理中にエラーが発生しました。もう一度お試しください。",
         variant: "destructive"
       });
     } finally {
@@ -49,8 +49,8 @@ const Index = () => {
     // Display initial toast with information
     const timer = setTimeout(() => {
       toast({
-        title: "AI-Powered Image Recognition",
-        description: "Upload an image to automatically extract clothing items and accessories.",
+        title: "AIパワード画像認識",
+        description: "画像をアップロードして、衣類アイテムやアクセサリーを自動的に抽出します。",
       });
     }, 1000);
 
@@ -81,7 +81,7 @@ const Index = () => {
       
       <footer className="py-6 border-t">
         <div className="container text-center text-sm text-muted-foreground">
-          <p>AI-powered wardrobe item detection. No server upload required.</p>
+          <p>AIパワードの服装アイテム検出。サーバーへのアップロードは不要です。</p>
         </div>
       </footer>
     </div>
