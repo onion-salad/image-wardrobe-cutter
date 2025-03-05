@@ -1,11 +1,11 @@
-
 import React from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Tag, AlertTriangle, Cloud, Info } from 'lucide-react';
+import { Download, Tag, AlertTriangle, Cloud, Info, ShoppingBag } from 'lucide-react';
 import { DetectedItem, downloadImage } from '@/utils/imageProcessing';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ResultsProps {
   items: DetectedItem[];
@@ -26,74 +26,107 @@ const ItemCard: React.FC<{ item: DetectedItem; usingGoogleVision?: boolean }> = 
     downloadImage(item.blob, `${item.type}.png`);
   };
 
-  return (
-    <Card className="overflow-hidden hover-scale">
-      <div className="relative h-48 bg-muted/30 flex items-center justify-center">
-        <img 
-          src={item.imageUrl} 
-          alt={item.type} 
-          className="w-full h-full object-contain p-2"
-        />
-        <Badge 
-          className="absolute top-2 right-2" 
-          variant="secondary"
-        >
-          {typeLabels[item.type]}
-        </Badge>
-        
-        {usingGoogleVision && (
-          <Badge 
-            className="absolute top-2 left-2" 
-            variant="outline"
-          >
-            <Cloud className="w-3 h-3 mr-1" />
-            Vision API
-          </Badge>
-        )}
-      </div>
-      
-      {/* 分類結果の表示 */}
-      <CardContent className="p-3">
-        {item.classification ? (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm">
-              <Tag className="w-4 h-4 text-muted-foreground" />
-              <span className="font-medium">{item.classification}</span>
-              {item.confidence && (
-                <span className="text-xs text-muted-foreground ml-auto">
-                  {Math.round(item.confidence * 100)}%
-                </span>
-              )}
-            </div>
-            
-            {/* 商品情報の表示 */}
-            {item.productInfo && (
-              <div className="flex items-start gap-2 text-xs text-muted-foreground mt-2 border-t pt-2">
-                <Info className="w-3 h-3 mt-0.5" />
-                <span>{item.productInfo}</span>
+  const formatProductInfo = (info: string | undefined) => {
+    if (!info) return null;
+    
+    const parts = info.split(' | ');
+    
+    return (
+      <div className="space-y-1.5 pt-2 border-t text-xs">
+        {parts.map((part, index) => {
+          if (part.startsWith('商品名:')) {
+            return (
+              <div key={index} className="font-medium text-sm">
+                <ShoppingBag className="w-3 h-3 inline mr-1" />
+                {part.substring(4)}
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Tag className="w-4 h-4" />
-            <span>分類中...</span>
-          </div>
-        )}
-      </CardContent>
-      
-      <CardFooter className="p-2 bg-card flex justify-end">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-full focus-ring"
-          onClick={handleDownload}
-        >
-          <Download className="w-4 h-4 mr-2" />
-          ダウンロード
-        </Button>
-      </CardFooter>
-    </Card>
+            );
+          }
+          
+          if (part.startsWith('ブランド:')) {
+            return (
+              <div key={index} className="text-primary">
+                {part}
+              </div>
+            );
+          }
+          
+          return <div key={index}>{part}</div>;
+        })}
+      </div>
+    );
+  };
+
+  return (
+    <TooltipProvider>
+      <Card className="overflow-hidden hover-scale">
+        <div className="relative h-48 bg-muted/30 flex items-center justify-center">
+          <img 
+            src={item.imageUrl} 
+            alt={item.type} 
+            className="w-full h-full object-contain p-2"
+          />
+          <Badge 
+            className="absolute top-2 right-2" 
+            variant="secondary"
+          >
+            {typeLabels[item.type]}
+          </Badge>
+          
+          {usingGoogleVision && (
+            <Badge 
+              className="absolute top-2 left-2" 
+              variant="outline"
+            >
+              <Cloud className="w-3 h-3 mr-1" />
+              Vision API
+            </Badge>
+          )}
+        </div>
+        
+        <CardContent className="p-3">
+          {item.classification ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Tag className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium">{item.classification}</span>
+                {item.confidence && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-xs text-muted-foreground ml-auto">
+                        {Math.round(item.confidence * 100)}%
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      分類の信頼度
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+              
+              {item.productInfo && formatProductInfo(item.productInfo)}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Tag className="w-4 h-4" />
+              <span>分類中...</span>
+            </div>
+          )}
+        </CardContent>
+        
+        <CardFooter className="p-2 bg-card flex justify-end">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full focus-ring"
+            onClick={handleDownload}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            ダウンロード
+          </Button>
+        </CardFooter>
+      </Card>
+    </TooltipProvider>
   );
 };
 

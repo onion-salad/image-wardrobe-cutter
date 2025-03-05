@@ -128,6 +128,14 @@ export const classifyImageWithGoogleVision = async (imageBlob: Blob): Promise<Cl
             },
             {
               type: 'WEB_DETECTION',
+              maxResults: 10
+            },
+            {
+              type: 'OBJECT_LOCALIZATION',
+              maxResults: 5
+            },
+            {
+              type: 'TEXT_DETECTION',
               maxResults: 5
             }
           ]
@@ -186,7 +194,17 @@ export const classifyImageWithGoogleVision = async (imageBlob: Blob): Promise<Cl
         brandInfo = `ブランド: ${response.logoAnnotations[0].description}`;
       }
 
+      let productText = '';
+      if (response.textAnnotations && response.textAnnotations.length > 0) {
+        const text = response.textAnnotations[0].description;
+        const lines = text.split('\n').slice(0, 3);
+        if (lines.length > 0) {
+          productText = `テキスト: ${lines.join(' ')}`;
+        }
+      }
+
       let similarProducts = '';
+      let productTitle = '';
       if (response.webDetection) {
         if (response.webDetection.webEntities && response.webDetection.webEntities.length > 0) {
           const entities = response.webDetection.webEntities
@@ -199,10 +217,33 @@ export const classifyImageWithGoogleVision = async (imageBlob: Blob): Promise<Cl
             similarProducts = `類似商品: ${entities}`;
           }
         }
+
+        if (response.webDetection.pagesWithMatchingImages && 
+            response.webDetection.pagesWithMatchingImages.length > 0) {
+          const bestMatch = response.webDetection.pagesWithMatchingImages[0];
+          if (bestMatch.pageTitle) {
+            productTitle = `商品名: ${bestMatch.pageTitle.split('|')[0].trim()}`;
+          }
+        }
       }
 
-      if (brandInfo || similarProducts) {
-        productInfo = [brandInfo, similarProducts].filter(Boolean).join(' | ');
+      let objectInfo = '';
+      if (response.localizedObjectAnnotations && response.localizedObjectAnnotations.length > 0) {
+        const objects = response.localizedObjectAnnotations
+          .slice(0, 2)
+          .map((obj: any) => `${obj.name}(${Math.round(obj.score * 100)}%)`)
+          .join(', ');
+        
+        if (objects) {
+          objectInfo = `検出: ${objects}`;
+        }
+      }
+
+      const infoItems = [productTitle, brandInfo, objectInfo, productText, similarProducts]
+        .filter(Boolean);
+      
+      if (infoItems.length > 0) {
+        productInfo = infoItems.join(' | ');
       }
       
       return {
