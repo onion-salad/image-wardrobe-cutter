@@ -260,6 +260,96 @@ export const classifyImageWithGoogleVision = async (imageBlob: Blob): Promise<Cl
   }
 };
 
+export const classifyImageWithGPT = async (imageBlob: Blob): Promise<ClassificationResult> => {
+  try {
+    const base64data = await blobToBase64(imageBlob);
+    
+    const apiKey = localStorage.getItem('openai_api_key') || '';
+    
+    if (!apiKey) {
+      throw new Error('OpenAI APIキーが設定されていません');
+    }
+    
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `あなたは衣類や服飾品の分析エキスパートです。与えられた画像を詳細に分析し、以下の情報を日本語で提供してください：
+1. アイテムの正確な名称
+2. ブランドやデザイナー（分かれば）
+3. 価格帯の推定（可能なら）
+4. デザインの特徴
+5. 素材の推定
+6. 同様の商品やスタイルへの言及
+7. 人気度や流行性に関するコメント
+JSONではなく、人間が読みやすい形で情報を提供してください。`
+          },
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'この衣類アイテムを詳細に分析して、できるだけ具体的な情報を教えてください。'
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: base64data
+                }
+              }
+            ]
+          }
+        ],
+        max_tokens: 1000
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API エラー: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('GPT-4 レスポンス:', data);
+
+    if (data.choices && data.choices.length > 0) {
+      const content = data.choices[0].message.content;
+
+      let label = '不明';
+      for (const [key, value] of Object.entries(fashionLabels)) {
+        if (content.toLowerCase().includes(key)) {
+          label = value;
+          break;
+        }
+      }
+
+      if (label === '不明') {
+        const firstLine = content.split('\n')[0];
+        if (firstLine.length > 0) {
+          label = firstLine.slice(0, 30);
+        }
+      }
+
+      return {
+        label: label,
+        score: 0.9,
+        productInfo: content
+      };
+    }
+
+    return { label: '不明', score: 0 };
+  } catch (error) {
+    console.error('GPT-4での画像分析中にエラーが発生しました:', error);
+    return { label: '不明', score: 0 };
+  }
+};
+
 const blobToBase64 = (blob: Blob): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
