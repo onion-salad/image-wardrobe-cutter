@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Tag, AlertTriangle, Cloud } from 'lucide-react';
+import { Download, Tag, AlertTriangle, Cloud, Info } from 'lucide-react';
 import { DetectedItem, downloadImage } from '@/utils/imageProcessing';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -55,13 +55,23 @@ const ItemCard: React.FC<{ item: DetectedItem; usingGoogleVision?: boolean }> = 
       {/* 分類結果の表示 */}
       <CardContent className="p-3">
         {item.classification ? (
-          <div className="flex items-center gap-2 text-sm">
-            <Tag className="w-4 h-4 text-muted-foreground" />
-            <span className="font-medium">{item.classification}</span>
-            {item.confidence && (
-              <span className="text-xs text-muted-foreground ml-auto">
-                {Math.round(item.confidence * 100)}%
-              </span>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm">
+              <Tag className="w-4 h-4 text-muted-foreground" />
+              <span className="font-medium">{item.classification}</span>
+              {item.confidence && (
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {Math.round(item.confidence * 100)}%
+                </span>
+              )}
+            </div>
+            
+            {/* 商品情報の表示 */}
+            {item.productInfo && (
+              <div className="flex items-start gap-2 text-xs text-muted-foreground mt-2 border-t pt-2">
+                <Info className="w-3 h-3 mt-0.5" />
+                <span>{item.productInfo}</span>
+              </div>
             )}
           </div>
         ) : (

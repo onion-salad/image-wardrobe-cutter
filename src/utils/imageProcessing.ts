@@ -9,6 +9,7 @@ export interface DetectedItem {
   blob: Blob;
   classification?: string; // 詳細な分類結果
   confidence?: number;    // 分類の信頼度
+  productInfo?: string;   // 商品情報（新規追加）
 }
 
 // Helper function to create cropped image
@@ -129,7 +130,8 @@ const classifyItems = async (items: DetectedItem[]): Promise<DetectedItem[]> => 
           return {
             ...item,
             classification: classification.label,
-            confidence: classification.score
+            confidence: classification.score,
+            productInfo: classification.productInfo // 商品情報を追加
           };
         } catch (error) {
           console.error(`Error classifying ${item.type}:`, error);
