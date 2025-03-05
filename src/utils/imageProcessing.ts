@@ -1,6 +1,6 @@
 
 import { loadImage, removeBackground } from '@/lib/transformers';
-import { classifyImage } from '@/lib/classification';
+import { classifyImage, classifyImageWithGoogleVision } from '@/lib/classification';
 
 // 拡張されたアイテム型定義
 export interface DetectedItem {
@@ -108,14 +108,23 @@ export const processImage = async (file: File): Promise<DetectedItem[]> => {
 // 各アイテムを分類
 const classifyItems = async (items: DetectedItem[]): Promise<DetectedItem[]> => {
   try {
+    // Google Vision APIを使用
+    const useGoogleVision = true; // この変数を使って切り替え可能にする
+    
     const classifiedItems = await Promise.all(
       items.map(async (item) => {
         try {
-          // 画像の種類によって適切なカテゴリを指定
-          const category = getCategoryForType(item.type);
+          let classification;
           
-          // 分類を実行
-          const classification = await classifyImage(item.imageUrl, category);
+          if (useGoogleVision) {
+            // Google Vision APIを使用
+            classification = await classifyImageWithGoogleVision(item.blob);
+          } else {
+            // 画像の種類によって適切なカテゴリを指定
+            const category = getCategoryForType(item.type);
+            // ブラウザ内分類を実行
+            classification = await classifyImage(item.imageUrl, category);
+          }
           
           return {
             ...item,

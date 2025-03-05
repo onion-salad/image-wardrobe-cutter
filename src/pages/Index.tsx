@@ -12,6 +12,7 @@ const Index = () => {
   const [detectedItems, setDetectedItems] = useState<DetectedItem[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [apiError, setApiError] = useState(false);
+  const [usingGoogleVision, setUsingGoogleVision] = useState(true); // Google Vision APIを使用
 
   const handleImageSelected = async (file: File) => {
     try {
@@ -33,13 +34,13 @@ const Index = () => {
         setApiError(true);
         toast({
           title: "一部の分類が不明です",
-          description: "より高精度な分類には外部APIの使用が必要かもしれません",
+          description: "より正確な分類のために追加のデータが必要かもしれません",
           variant: "destructive"
         });
       } else {
         toast({
           title: "処理完了",
-          description: "画像の処理が正常に完了しました",
+          description: "Google Cloud Vision APIで画像の処理が正常に完了しました",
         });
       }
     } catch (error) {
@@ -66,7 +67,7 @@ const Index = () => {
     const timer = setTimeout(() => {
       toast({
         title: "AIパワード画像認識",
-        description: "画像をアップロードして、衣類アイテムやアクセサリーを自動的に抽出します。",
+        description: "Google Cloud Vision APIを使用して衣類アイテムやアクセサリーを自動的に抽出します。",
       });
     }, 1000);
 
@@ -91,6 +92,7 @@ const Index = () => {
               items={detectedItems} 
               onReset={handleReset}
               showApiError={apiError}
+              usingGoogleVision={usingGoogleVision}
             />
           )}
         </div>
@@ -99,11 +101,9 @@ const Index = () => {
       <footer className="py-6 border-t">
         <div className="container text-center text-sm text-muted-foreground">
           <p>AIパワードの服装アイテム検出。サーバーへのアップロードは不要です。</p>
-          {apiError && (
-            <p className="mt-2 text-xs">
-              より高精度な分類のためには、Google Cloud Vision APIなどの外部APIの使用を検討してください。
-            </p>
-          )}
+          <p className="mt-2 text-xs">
+            Google Cloud Vision APIを利用して高精度なアイテム分類を実現しています。
+          </p>
         </div>
       </footer>
     </div>

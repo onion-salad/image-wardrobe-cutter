@@ -63,7 +63,16 @@ let classifier: any = null;
  */
 export const classifyImage = async (imageUrl: string, category?: string): Promise<ClassificationResult> => {
   try {
-    // 分類器をロードする（初回のみ）
+    // Google Vision API を使用する
+    if (imageUrl.startsWith('blob:')) {
+      // Blobからデータを取得
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const result = await classifyImageWithGoogleVision(blob);
+      return result;
+    }
+    
+    // バックアップとして、ブラウザ内モデルを使用
     if (!classifier) {
       console.log('画像分類モデルをロード中...');
       
@@ -124,20 +133,102 @@ export const classifyImage = async (imageUrl: string, category?: string): Promis
   }
 };
 
-// Google Vision APIを使用した分類（コメントアウト）
-// 注：この機能を使用するには、Google Cloud Vision APIのキーが必要です
-/*
-export const classifyImageWithGoogleVision = async (imageBase64: string): Promise<ClassificationResult> => {
+// Google Vision APIを使用した分類
+export const classifyImageWithGoogleVision = async (imageBlob: Blob): Promise<ClassificationResult> => {
   try {
-    // ここでGoogle Cloud Vision APIを呼び出す
-    // 実際の実装では、サーバーサイドでAPIキーを安全に保管し、
-    // フロントエンドからはサーバーエンドポイントを呼び出すのが良い方法です
+    // BlobをBase64に変換
+    const base64data = await blobToBase64(imageBlob);
+    const imageBase64 = base64data.split(',')[1]; // Base64のデータ部分だけを抽出
+
+    // Google Cloud Vision APIリクエスト作成
+    const apiKey = 'AIzaSyDIK0x9Z21-B1KYURRpGWzfQ8JiEhGpxMg';
+    const visionApiUrl = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
     
-    // モックの結果を返す
-    return { label: 'デニムジャケット', score: 0.95 };
+    const requestBody = {
+      requests: [
+        {
+          image: {
+            content: imageBase64
+          },
+          features: [
+            {
+              type: 'LABEL_DETECTION',
+              maxResults: 10
+            }
+          ]
+        }
+      ]
+    };
+
+    // APIリクエスト送信
+    const response = await fetch(visionApiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      throw new Error(`API response: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Google Vision API レスポンス:', data);
+
+    // レスポンスから最も確率の高いラベルを取得
+    if (data.responses && 
+        data.responses[0] && 
+        data.responses[0].labelAnnotations && 
+        data.responses[0].labelAnnotations.length > 0) {
+      
+      const annotations = data.responses[0].labelAnnotations;
+      
+      // ファッション関連の項目をフィルタリング
+      const fashionItems = annotations.filter((item: any) => {
+        const description = item.description.toLowerCase();
+        return Object.keys(fashionLabels).some(key => description.includes(key));
+      });
+      
+      if (fashionItems.length > 0) {
+        const topItem = fashionItems[0];
+        const description = topItem.description.toLowerCase();
+        
+        // 日本語ラベルに変換
+        let japaneseLabel = '不明';
+        for (const [key, value] of Object.entries(fashionLabels)) {
+          if (description.includes(key)) {
+            japaneseLabel = value;
+            break;
+          }
+        }
+        
+        return {
+          label: japaneseLabel,
+          score: topItem.score
+        };
+      }
+      
+      // ファッション関連アイテムが見つからない場合は最初のアノテーションを使用
+      return {
+        label: data.responses[0].labelAnnotations[0].description,
+        score: data.responses[0].labelAnnotations[0].score
+      };
+    }
+    
+    return { label: '不明', score: 0 };
   } catch (error) {
     console.error('Google Vision API呼び出し中にエラーが発生しました:', error);
     return { label: '不明', score: 0 };
   }
 };
-*/
+
+// BlobをBase64に変換するヘルパー関数
+const blobToBase64 = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};

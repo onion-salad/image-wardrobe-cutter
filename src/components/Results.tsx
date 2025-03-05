@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Tag, AlertTriangle } from 'lucide-react';
+import { Download, Tag, AlertTriangle, CloudCheck } from 'lucide-react';
 import { DetectedItem, downloadImage } from '@/utils/imageProcessing';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -11,9 +11,10 @@ interface ResultsProps {
   items: DetectedItem[];
   onReset: () => void;
   showApiError?: boolean;
+  usingGoogleVision?: boolean;
 }
 
-const ItemCard: React.FC<{ item: DetectedItem }> = ({ item }) => {
+const ItemCard: React.FC<{ item: DetectedItem; usingGoogleVision?: boolean }> = ({ item, usingGoogleVision }) => {
   const typeLabels = {
     top: 'トップス',
     bottom: 'ボトムス',
@@ -39,6 +40,16 @@ const ItemCard: React.FC<{ item: DetectedItem }> = ({ item }) => {
         >
           {typeLabels[item.type]}
         </Badge>
+        
+        {usingGoogleVision && (
+          <Badge 
+            className="absolute top-2 left-2" 
+            variant="outline"
+          >
+            <CloudCheck className="w-3 h-3 mr-1" />
+            Vision API
+          </Badge>
+        )}
       </div>
       
       {/* 分類結果の表示 */}
@@ -76,7 +87,12 @@ const ItemCard: React.FC<{ item: DetectedItem }> = ({ item }) => {
   );
 };
 
-const Results: React.FC<ResultsProps> = ({ items, onReset, showApiError }) => {
+const Results: React.FC<ResultsProps> = ({ 
+  items, 
+  onReset, 
+  showApiError,
+  usingGoogleVision = false
+}) => {
   if (items.length === 0) return null;
 
   return (
@@ -88,7 +104,7 @@ const Results: React.FC<ResultsProps> = ({ items, onReset, showApiError }) => {
         </Button>
       </div>
 
-      {showApiError && (
+      {showApiError && !usingGoogleVision && (
         <Alert className="mb-6" variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
@@ -98,9 +114,22 @@ const Results: React.FC<ResultsProps> = ({ items, onReset, showApiError }) => {
         </Alert>
       )}
 
+      {usingGoogleVision && (
+        <Alert className="mb-6">
+          <CloudCheck className="h-4 w-4" />
+          <AlertDescription>
+            Google Cloud Vision APIを使用して高精度な分類を行っています。
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {items.map((item, index) => (
-          <ItemCard key={`${item.type}-${index}`} item={item} />
+          <ItemCard 
+            key={`${item.type}-${index}`} 
+            item={item} 
+            usingGoogleVision={usingGoogleVision}
+          />
         ))}
       </div>
     </div>
