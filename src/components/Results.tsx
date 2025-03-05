@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Tag, AlertTriangle, CloudCheck } from 'lucide-react';
+import { Download, Tag, AlertTriangle, Cloud } from 'lucide-react';
 import { DetectedItem, downloadImage } from '@/utils/imageProcessing';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -46,7 +46,7 @@ const ItemCard: React.FC<{ item: DetectedItem; usingGoogleVision?: boolean }> = 
             className="absolute top-2 left-2" 
             variant="outline"
           >
-            <CloudCheck className="w-3 h-3 mr-1" />
+            <Cloud className="w-3 h-3 mr-1" />
             Vision API
           </Badge>
         )}
@@ -116,7 +116,7 @@ const Results: React.FC<ResultsProps> = ({
 
       {usingGoogleVision && (
         <Alert className="mb-6">
-          <CloudCheck className="h-4 w-4" />
+          <Cloud className="h-4 w-4" />
           <AlertDescription>
             Google Cloud Vision APIを使用して高精度な分類を行っています。
           </AlertDescription>
